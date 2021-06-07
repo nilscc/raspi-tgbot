@@ -1,9 +1,9 @@
-import config
-import telebot
+import telegram
+import telegram.ext
 import psycopg2
 
-# the main bot instance
-bot = telebot.TeleBot(config.TOKEN)
+# local config
+import config
 
 # database table name
 _TABLE='am2302.t_am2302'
@@ -38,13 +38,25 @@ def _last(db):
 # Commands
 #
 
-@bot.message_handler(commands=['current'])
-def send_last(message):
+def temp(update, context):
     with connect() as db:
         l = _last(db)
-        bot.reply_to(message,
-            f'Aktuell {l.temperature}°C und {l.humidity}% Luftfeuchtigkeit. (Stand: {l.date})')
+        update.message.reply_text(
+            f'Aktuell {l.temperature}°C und {l.humidity}% Luftfeuchtigkeit. (Stand: {l.date})'
+        )
 
+#
+# Main
+#
 
-# run main
-bot.polling()
+if __name__ == '__main__':
+
+    # the main bot instance
+    bot = telegram.ext.Updater(token=config.TOKEN)
+    
+    # commands
+    bot.dispatcher.add_handler(telegram.ext.CommandHandler('temp', temp))
+    
+    # main event loop
+    bot.start_polling()
+    bot.idle()
