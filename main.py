@@ -1,3 +1,7 @@
+# set locale from environment
+import locale
+locale.setlocale(locale.LC_ALL, '')
+
 import telegram
 import telegram.ext
 import psycopg2
@@ -42,7 +46,7 @@ def temp(update, context):
     with connect() as db:
         l = _last(db)
         update.message.reply_text(
-            f'Aktuell {l.temperature}°C und {l.humidity}% Luftfeuchtigkeit. (Stand: {l.date:%X %d/%m/%Y})'
+            f'Aktuell {l.temperature}°C und {l.humidity}% Luftfeuchtigkeit. (Stand: {l.date:%X %x})'
         )
 
 #
