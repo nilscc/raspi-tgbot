@@ -46,7 +46,8 @@ def temp(update, context):
     with connect() as db:
         l = _last(db)
         update.message.reply_text(
-            f'Aktuell {l.temperature}°C und {l.humidity}% Luftfeuchtigkeit. (Stand: {l.date:%X %x})'
+            f'Aktuell {l.temperature}°C und {l.humidity}% Luftfeuchtigkeit.\n'
+            f'Stand: {l.date:%X %x}'
         )
 
 #
