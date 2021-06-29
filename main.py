@@ -6,6 +6,8 @@ import telegram
 import telegram.ext
 import psycopg2
 
+import bme280.i2c
+
 # local config
 import config
 
@@ -38,17 +40,35 @@ def _last(db):
         if row:
             return DbTemp(*row)
 
+def _history(db, limit=None):
+    with db.cursor() as cur:
+        cur.execute(f'''
+            select
+                date,
+                temperature,
+                humidity
+            from
+                {_TABLE}
+            order by
+                date desc
+            limit %s
+            ''',
+            (limit,))
+        return list(cur.fetchall())
+
 #
 # Commands
 #
 
 def temp(update, context):
-    with connect() as db:
-        l = _last(db)
-        update.message.reply_text(
-            f'Aktuell {l.temperature}°C und {l.humidity}% Luftfeuchtigkeit.\n'
-            f'Stand: {l.date:%X %x}'
-        )
+    _i2c = bme280.i2c.i2c()
+    _i2c.open()
+    _i2c.runForcedMode()
+    update.message.reply_text(
+        f'{_i2c.temperature:.2f}°C\n'
+        f'{_i2c.pressure / 100 :.2f}hPa\n'
+        f'{_i2c.humidity:.2f}% Luftfeuchtigkeit'
+    )
 
 #
 # Main
