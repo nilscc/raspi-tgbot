@@ -20,9 +20,10 @@ def temp_history(data):
     fig,axis = plt.subplots(figsize=(8,2))
 
     # dates
-    x_data = [ d for d,_,_,_ in data ]
+    x_data = [ d.date for d in data ]
+    
     # temperature
-    y_data = [ t for _,t,_,_ in data ]
+    y_data = [ d.temperature for d in data ]
 
     axis.plot(x_data, y_data)
     axis.grid()

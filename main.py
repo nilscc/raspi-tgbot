@@ -40,27 +40,26 @@ def _history(db, limit=None):
             limit %s
             ''',
             (limit,))
-        return list(cur.fetchall())
+        return list(DbTemp(*row) for row in cur.fetchall())
 
-def _current():
-    _i2c = bme280.i2c.i2c()
-    _i2c.open()
-    _i2c.runForcedMode()
-    return _i2c
+def _last(db):
+    return _history(db, limit=1)[0]
 
 #
 # Commands
 #
 
 def temp(update, context):
-    cur = _current()
     with connect() as db:
+        cur = _last(db)
         fig = plots.temp_history(_history(db, limit=60*12))
     update.message.reply_photo(
         photo = plots.to_bytes(fig),
-        caption = f'{cur.temperature:.2f}°C\n'
+        caption =
+            f'{cur.temperature:.2f}°C\n'
             f'{cur.pressure / 100 :.2f}hPa\n'
-            f'{cur.humidity:.2f}% Luftfeuchtigkeit',
+            f'{cur.humidity:.2f}%\n'
+            f'Uhrzeit: {cur.date:%X}',
     )
 
 #
