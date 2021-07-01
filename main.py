@@ -5,6 +5,7 @@ locale.setlocale(locale.LC_ALL, '')
 import telegram
 import telegram.ext
 import psycopg2
+import logging
 
 import bme280.i2c
 
@@ -49,10 +50,12 @@ def _last(db):
 # Commands
 #
 
-def temp(update, context):
+def weather(update: telegram.Update, context: telegram.ext.CallbackContext):
     with connect() as db:
         cur = _last(db)
         fig = plots.temp_history(_history(db, limit=60*12))
+
+    # send formatted response
     update.message.reply_photo(
         photo = plots.to_bytes(fig),
         caption =
@@ -62,17 +65,23 @@ def temp(update, context):
             f'Uhrzeit: {cur.date:%X}',
     )
 
+    plots.close(fig)
+
 #
 # Main
 #
 
 if __name__ == '__main__':
 
+    logging.basicConfig(
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        level=logging.INFO)
+
     # the main bot instance
     bot = telegram.ext.Updater(token=config.TOKEN)
     
     # commands
-    bot.dispatcher.add_handler(telegram.ext.CommandHandler('temp', temp))
+    bot.dispatcher.add_handler(telegram.ext.CommandHandler('weather', weather))
     
     # main event loop
     bot.start_polling()

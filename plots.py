@@ -16,6 +16,9 @@ def to_bytes(fig):
 
     return bio.getvalue()
 
+def close(fig):
+    plt.close(fig)
+
 def temp_history(data):
     fig,axis = plt.subplots(figsize=(8,2))
 
