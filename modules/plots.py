@@ -5,6 +5,10 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.dates
 
+import itertools
+
+from modules.heat_index import heat_index
+
 def to_bytes(fig):
     # the bytes IO object
     bio = io.BytesIO()
@@ -42,10 +46,33 @@ def temp_history(data):
 
     # plot temperature
     y_data = [ d.temperature for d in data ]
-    axis.plot(x_data, y_data, color='red')
+    axis.plot(x_data, y_data, color='red', label='Temperatur')
+    
+    # plot heat index
+    c = 0
+    for k,g in itertools.groupby(data, key=lambda d: d.temperature >= 27):
+        if not k:
+            continue
+
+        g = list(g)
+        d_data = [ d.date for d in g ]
+        h_data = [ heat_index(d.temperature, d.humidity) for d in g ]
+
+        # plot heat index
+        axis.plot(list(d_data), h_data,
+            color='tomato',
+            alpha=0.6,
+            label='Hitzeindex' if c == 0 else None)
+
+        # count number of heat index plots
+        c += 1
 
     # show grid
     axis.grid()
+
+    # show legend if we have heat index plots
+    if c > 0:
+        axis.legend(loc='upper left', fontsize='small')
 
     #
     # plot humidity diagram
@@ -72,9 +99,6 @@ def temp_history(data):
     #
 
     axis = plt.subplot2grid((3,1), (2,0), fig=fig)
-
-    # rotate x labels by 45°
-    plt.xticks(rotation=45)
 
     # format x-axis (time)
     axis.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))

@@ -11,7 +11,8 @@ import bme280.i2c
 
 # local config
 import config
-import plots
+import modules.plots
+from modules.heat_index import heat_index
 
 # database table name
 _TABLE='bme280.t_bme280'
@@ -53,19 +54,22 @@ def _last(db):
 def weather(update: telegram.Update, context: telegram.ext.CallbackContext):
     with connect() as db:
         cur = _last(db)
-        fig = plots.temp_history(_history(db, limit=60*12))
+        fig = modules.plots.temp_history(_history(db, limit=60*12))
 
+    # calculate heat index
+    hi = ''
+    if cur.temperature >= 27.0:
+        hi = f'(gefühlt {heat_index(cur.temperature, cur.humidity):.1f}°C) '
+        
     # send formatted response
     update.message.reply_photo(
-        photo = plots.to_bytes(fig),
+        photo = modules.plots.to_bytes(fig),
         caption =
-            f'{cur.temperature:.2f}°C\n'
-            f'{cur.pressure / 100 :.2f}hPa\n'
-            f'{cur.humidity:.2f}%\n'
-            f'Uhrzeit: {cur.date:%X}',
+            f'Aktuell: {cur.temperature:.1f}°C {hi}/ {cur.pressure / 100 :.1f}hPa / {cur.humidity:.1f}% rF\n'
+            f'Stand: {cur.date:%X}',
     )
 
-    plots.close(fig)
+    modules.plots.close(fig)
 
 #
 # Main
