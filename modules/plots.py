@@ -50,7 +50,7 @@ def temp_history(data):
     
     # plot heat index
     c = 0
-    for k,g in itertools.groupby(data, key=lambda d: d.temperature >= 27):
+    for k,g in itertools.groupby(data, key=lambda d: d.temperature >= 27 and d.humidity >= 40):
         if not k:
             continue
 

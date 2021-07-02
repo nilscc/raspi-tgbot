@@ -1,5 +1,6 @@
 def heat_index(temperature, humidity):
     assert temperature >= 27.0
+    assert humidity >= 40.0
 
     c1 = -8.784695
     c2 = 1.61139411
