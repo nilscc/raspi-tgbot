@@ -51,14 +51,14 @@ def _last(db):
 # Commands
 #
 
-def weather(update: telegram.Update, context: telegram.ext.CallbackContext):
+def weather(update: telegram.Update, context: telegram.ext.CallbackContext, hours: int = 12):
     with connect() as db:
         cur = _last(db)
-        fig = modules.plots.temp_history(_history(db, limit=60*12))
+        fig = modules.plots.temp_history(_history(db, limit=60*hours))
 
     # calculate heat index
     hi = ''
-    if cur.temperature >= 27.0:
+    if cur.temperature >= 27.0 and cur.humidity >= 40.0:
         hi = f'(gefühlt {heat_index(cur.temperature, cur.humidity):.1f}°C) '
         
     # send formatted response
@@ -70,6 +70,13 @@ def weather(update: telegram.Update, context: telegram.ext.CallbackContext):
     )
 
     modules.plots.close(fig)
+
+def weather24(update: telegram.Update, context: telegram.ext.CallbackContext):
+    weather(update, context, hours=24)
+
+def weather72(update: telegram.Update, context: telegram.ext.CallbackContext):
+    weather(update, context, hours=72)
+
 
 #
 # Main
@@ -86,6 +93,8 @@ if __name__ == '__main__':
     
     # commands
     bot.dispatcher.add_handler(telegram.ext.CommandHandler('weather', weather))
+    bot.dispatcher.add_handler(telegram.ext.CommandHandler('weather24', weather24))
+    bot.dispatcher.add_handler(telegram.ext.CommandHandler('weather72', weather72))
     
     # main event loop
     bot.start_polling()
