@@ -77,6 +77,22 @@ def weather24(update: telegram.Update, context: telegram.ext.CallbackContext):
 def weather72(update: telegram.Update, context: telegram.ext.CallbackContext):
     weather(update, context, hours=72)
 
+# Aral Module
+
+import modules.aral
+
+def aral(update: telegram.Update, context: telegram.ext.CallbackContext):
+    l = []
+    with connect() as db:
+        s = modules.aral.station.by_id(db, 1)
+        s.update_prices(db)
+
+        for i,p in enumerate(s.most_recent_prices(db)):
+            f = p.fuel(db)
+            l.append(f'*{f.name}:* {p.price}')
+
+    l = '\n'.join(l)
+    update.message.reply_markdown(f'{s.name}: \n\n{l}')
 
 #
 # Main
@@ -95,7 +111,9 @@ if __name__ == '__main__':
     bot.dispatcher.add_handler(telegram.ext.CommandHandler('weather', weather))
     bot.dispatcher.add_handler(telegram.ext.CommandHandler('weather24', weather24))
     bot.dispatcher.add_handler(telegram.ext.CommandHandler('weather72', weather72))
-    
+
+    bot.dispatcher.add_handler(telegram.ext.CommandHandler('aral', aral))
+
     # main event loop
     bot.start_polling()
     bot.idle()
