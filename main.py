@@ -89,10 +89,10 @@ def aral(update: telegram.Update, context: telegram.ext.CallbackContext):
 
         for i,p in enumerate(s.most_recent_prices(db)):
             f = p.fuel(db)
-            l.append(f'*{f.name}:* {p.price}')
+            l.append(f'`  {p.price}  ` *{f.name}* ({p.valid_from.strftime("%X, %x")})')
 
     l = '\n'.join(l)
-    update.message.reply_markdown(f'{s.name}: \n\n{l}')
+    update.message.reply_markdown(f'{s.name}: \n{l}')
 
 #
 # Main
