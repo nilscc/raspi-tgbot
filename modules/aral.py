@@ -176,25 +176,11 @@ def get_prices(url: str, verbose=True):
 
 if __name__ == '__main__':
 
-    __URL = 'https://api.tankstelle.aral.de/api/v2/stations/15032600/prices'
+    import time
+    while True:
+        with psycopg2.connect('') as db:
 
-    with psycopg2.connect('') as db:
-        #s = station(id=None, api_key=15032600, name='Aral Renning')
-        #s.insert(db, on_conflict=do_nothing())
-        #print(s.id, s.name)
+            for s in station.all(db):
+                s.update_prices(db)
 
-        # for s in station.all(db):
-        #     s = station.by_id(db, 1)
-        #     print(s.id, s.name)
-
-        s = station.by_api_key(db, 15032600)
-        print(s.id, s.name)
-
-        #s.update_prices(db)
-
-        for p in s.prices(db):
-            f = p.fuel(db)
-            print(f'{f.name}: {p.price}')
-
-    #for p in get_prices(__URL):
-        #print(f'{p.name}: {p.price} ({p.valid_from.time()})')
+        time.sleep(60)
