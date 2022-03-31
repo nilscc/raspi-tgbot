@@ -1,5 +1,5 @@
 from dataclasses import dataclass, asdict
-from typing import Optional
+from typing import Optional, List
 from urllib.request import urlopen
 from datetime import datetime, timezone
 import json
@@ -121,13 +121,22 @@ class station (db_object):
 
                 p.insert(database, on_conflict=do_nothing())
 
-    def most_recent_prices(self, database):
+    def most_recent_prices(self, database,
+            ignore_fuel_ids: List[int]=[],
+            ):
         __VIEW__ = 'tgbot_2203.v_aral_prices_most_recent_by_fuel'
 
         assert self.id is not None
 
         with database.cursor() as cur:
-            cur.execute(f'select * from {__VIEW__} where station_id = %s', (self.id,))
+            cur.execute(f'''
+                select *
+                from {__VIEW__}
+                where
+                    station_id = %s
+                    and
+                    not fuel_id = any(%s)
+                ''', (self.id, ignore_fuel_ids))
             return [ price(*r) for r in cur.fetchall() ]
 
 

@@ -1,6 +1,7 @@
 # set locale from environment
 import locale
 locale.setlocale(locale.LC_ALL, '')
+from datetime import datetime
 
 import telegram
 import telegram.ext
@@ -87,9 +88,15 @@ def aral(update: telegram.Update, context: telegram.ext.CallbackContext):
         s = modules.aral.station.by_id(db, 1)
         s.update_prices(db)
 
-        for i,p in enumerate(s.most_recent_prices(db)):
+        for i,p in enumerate(s.most_recent_prices(db, ignore_fuel_ids=[5,7,8])):
             f = p.fuel(db)
-            l.append(f'`  {round(p.price) / 100.0}€  ` *{f.name}* ({p.valid_from.strftime("%X, %x")})')
+            t = p.valid_from.strftime('%H:%M')
+            if p.valid_from.date() < datetime.today().date():
+                d = p.valid_from.strftime(' %d.%m.%y')
+            else:
+                d = ''
+
+            l.append(f'`  {round(p.price) / 100.0 :.2f}€  ` *{f.name}* ({t}{d})')
 
     l = '\n'.join(l)
     update.message.reply_markdown(f'{s.name}: \n{l}')
