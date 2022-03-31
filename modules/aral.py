@@ -6,15 +6,37 @@ import json
 
 import psycopg2
 
+#
+# API definitions and helper
+#
+
 __API_URL__ = 'https://api.tankstelle.aral.de/api/v2/stations/{station_id}/prices'
+
+def convert_api_time(s: str):
+    '''Convert time from API ISO UTC string to local timestamp with time zone.'''
+    return datetime \
+        .fromisoformat(s) \
+        .replace(tzinfo=timezone.utc) \
+        .astimezone()
+
+
+#
+# Database types
+#
 
 @dataclass
 class on_conflict:
+    '''PostgreSQL INSERT ON CONFLICT action'''
     action: str
 
 def do_nothing(): return on_conflict('do nothing')
 
 class db_object:
+    '''
+    Generic database object. Base class for all dataclasses representing
+    database table entries.
+    '''
+
     def insert(self, database,
             on_conflict: Optional[on_conflict] = None,
             ):
@@ -67,8 +89,10 @@ class db_object:
             cur.execute(f'select * from {cls.table()}')
             return [ cls(*r) for r in cur.fetchall() ]
 
+
 @dataclass
 class station (db_object):
+
     @staticmethod
     def table(): return 'tgbot_2203.t_aral_stations'
 
@@ -106,8 +130,10 @@ class station (db_object):
             cur.execute(f'select * from {__VIEW__} where station_id = %s', (self.id,))
             return [ price(*r) for r in cur.fetchall() ]
 
+
 @dataclass
 class fuel (db_object):
+
     @staticmethod
     def table(): return 'tgbot_2203.t_aral_fuels'
 
@@ -115,8 +141,10 @@ class fuel (db_object):
     api_key: int
     name: str
 
+
 @dataclass
 class price (db_object):
+
     @staticmethod
     def table(): return 'tgbot_2203.t_aral_prices'
 
@@ -132,47 +160,10 @@ class price (db_object):
     def station(self, database):
         return station.by_id(database, self.station_id)
 
-def convert_api_time(s: str):
-    '''Convert time from API ISO UTC string to local timestamp with time zone.'''
-    return datetime \
-        .fromisoformat(s) \
-        .replace(tzinfo=timezone.utc) \
-        .astimezone()
 
-
-
-
-
-
-
-@dataclass
-class fuel_price:
-    station_id: int
-    api_key: str
-    name: str
-    price: float
-    valid_from: datetime
-
-    def insert(self, database):
-        pass
-
-def get_prices(url: str, verbose=True):
-    with urlopen(url) as response:
-        if verbose:
-            limit = response.headers['x-ratelimit-limit']
-            remaining = response.headers['x-ratelimit-remaining']
-            print(f'Ratelimit: {remaining} of {limit} remaining.')
-
-        data = json.loads(response.read())
-        for p in data['data']:
-
-
-            yield fuel_price(
-                p['aral_id'],
-                p['name'],
-                p['price']['price'],
-                convert_time(p['price']['valid_from']),
-                )
+#
+# Main test/update loop
+#
 
 if __name__ == '__main__':
 
@@ -180,6 +171,7 @@ if __name__ == '__main__':
     while True:
         with psycopg2.connect('') as db:
 
+            # update all stations
             for s in station.all(db):
                 s.update_prices(db)
 
